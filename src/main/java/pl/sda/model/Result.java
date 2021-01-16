@@ -49,11 +49,11 @@ public class Result {
         this.gameType = gameType;
     }
 
-    public List<Integer> getResultsJson() {
+    public List<Integer> getNumbers() {
         return numbers;
     }
 
-    public void setResultsJson(List<Integer> resultsJson) {
+    public void setNumbers(List<Integer> resultsJson) {
         this.numbers = resultsJson;
     }
 

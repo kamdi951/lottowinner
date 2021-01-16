@@ -4,49 +4,46 @@ import com.google.gson.*;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import pl.sda.checker.Checker;
+import pl.sda.checker.NumberChecker;
+import pl.sda.converters.Converter;
+import pl.sda.converters.GsonProvider;
+
+import pl.sda.converters.JsonConverter;
+import pl.sda.input.*;
+import pl.sda.model.Game;
 import pl.sda.model.GameType;
 import pl.sda.model.Games;
+import pl.sda.model.Order;
+import pl.sda.network.GameApi;
+import pl.sda.network.LottoGameApi;
+import pl.sda.network.OkHttp;
+import pl.sda.network.RequestBuilder;
 
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.lang.reflect.Type;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
+import java.time.Month;
+import java.util.*;
 
 public class App {
 
-    public static void main(String[] args) throws IOException, InterruptedIOException {
-        //Gson gson = new Gson();
-        Gson gson = new GsonBuilder().registerTypeAdapter(LocalDateTime.class, new JsonDeserializer<LocalDateTime>() {
-            private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    public static void main(String[] args) throws IOException {
 
-            @Override
-            public LocalDateTime deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
-                    throws JsonParseException {
-                return LocalDateTime.parse(json.getAsString(), formatter);
-            }
-        })
-                .registerTypeAdapter(GameType.class, new JsonDeserializer<GameType>() {
-                    @Override
-                    public GameType deserialize(JsonElement json, Type type, JsonDeserializationContext jsonDeserializationContext)
-                            throws JsonParseException {
-                        return GameType.getTypeByName(json.getAsString());
-                    }
-                })
-                .create();
+        MyScanner scanner= new MyScanner();
 
-        OkHttpClient client = new OkHttpClient();
+        Input userInput = new UserInput(scanner, new DefaultTypeProvider(scanner));
+        InputResult inputResult = userInput.getInputResults();
 
-        Request request = new Request.Builder()
-                .url("https://www.lotto.pl/api/lotteries/draw-results/by-gametype?game=Lotto&index=1&size=15&sort=drawDate&order=DESC")
-                .build();
+        LocalDateTime searchDate = LocalDateTime.of(2019, Month.JANUARY, 5, 0, 0);
 
-        Response response = client.newCall(request).execute();
-        String stringresponse = (response.body().string());
+        GameApi api = new LottoGameApi();
+        Game game = api.getGameForDate(GameType.LOTTO, searchDate);
 
-        Games lottoGamesFromBackend = gson.fromJson(stringresponse, Games.class);
-        System.out.println(lottoGamesFromBackend);
+        Checker numberChecker = new NumberChecker();
+        numberChecker.check(inputResult.getNumbers(), game.getNumbers());
+
+        System.out.println(game);
+
 
     }
 
